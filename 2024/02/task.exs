@@ -17,9 +17,10 @@ defmodule AdventOfCode.Y2024.D02 do
     |> Enum.zip(Enum.slice(report, 1, Enum.count(report)))
     |> Enum.map(fn {a,b} -> a - b end)
 
-  case Enum.all?(distances, fn d -> d in 1..3 end) do
-    true -> 1
-    false -> if Enum.all?(distances, fn d -> d in -1..-3 end), do: 1, else: 0
+  cond do
+    Enum.all?(distances, fn d -> d in 1..3 end) -> 1
+    Enum.all?(distances, fn d -> d in -1..-3 end) -> 1
+    true -> 0 # if neither pass
   end
  end
 
