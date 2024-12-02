@@ -12,61 +12,46 @@ defmodule AdventOfCode.Y2024.D02 do
       end)
   end
 
+ def safe?(report) do
+  distances = report
+    |> Enum.zip(Enum.slice(report, 1, Enum.count(report)))
+    |> Enum.map(fn {a,b} -> a - b end)
 
-  def check_report(_value, {:unsafe}) do
-    {:unsafe}
+  case Enum.all?(distances, fn d -> d in 1..3 end) do
+    true -> 1
+    false -> if Enum.all?(distances, fn d -> d in -1..-3 end), do: 1, else: 0
   end
-
-  def check_report(value, prev) when is_integer(prev) do
-    valid_distance? = abs(prev - value) in Range.new(1,3)
-    direction = if prev > value, do: :dec, else: :inc
-    if valid_distance?, do: {direction, value}, else: {:unsafe}
-  end
-
-  def check_report(value, { direction, prev } ) do
-    valid_distance? = abs(prev - value) in Range.new(1,3)
-    valid_direction? = if direction === :inc, do: prev < value, else: prev > value
-    if valid_direction? && valid_distance?, do: {direction, value}, else: {:unsafe}
-  end
-
-  def check_report_with_dampener(r) do
-    ri =  Enum.with_index(r, fn element, index -> {index, element} end)
-
-    Range.new(0, Enum.count(r) - 1)
-      |> Enum.map(fn i ->
-        Enum.reject(ri, fn {index, _el} -> i === index end)
-        |> Enum.map(fn {_index, el} -> el end)
-        |> Enum.reduce(&check_report/2)
-      end)
-      |> Enum.any?(fn
-        {:unsafe} -> false
-        {_d, _v} -> true
-      end)
-  end
-
-
-  def unsafe_handler(false, _r), do: 0
-
-  def unsafe_handler(true, r) do
-    case check_report_with_dampener(r) do
-      false -> 0
-      true -> 1
-    end
-  end
-
-  def solve(dampen?) do
-    parse_input("input.txt")
-      |> Enum.map(fn r ->
-        case Enum.reduce(r, &check_report/2) do
-          {:unsafe} -> unsafe_handler(dampen?, r)
-          {_d, _v} -> 1
-        end
-      end)
-      |> Enum.sum()
-      |> IO.inspect()
  end
 
+ def damper(report) do
+  ri =  Enum.with_index(report)
+
+  case Range.new(0, Enum.count(report) - 1)
+    |> Enum.map(fn i ->
+      Enum.reject(ri, fn {_el, index} -> i === index end)
+      |> Enum.map(fn { el, _index } -> el end)
+      |> safe?()
+    end)
+    |> Enum.any?(fn x -> x ===  1 end) do
+      true -> 1
+      false -> 0
+    end
+ end
+
+ def solve_part1() do
+  parse_input("input.txt")
+  |> Enum.map(&safe?/1)
+  |> Enum.sum()
+  |> IO.inspect()
+ end
+
+ def solve_part2() do
+  parse_input("input.txt")
+  |> Enum.map(&damper/1)
+  |> Enum.sum()
+  |> IO.inspect()
+ end
 end
 
-AdventOfCode.Y2024.D02.solve(false)
-AdventOfCode.Y2024.D02.solve(true)
+AdventOfCode.Y2024.D02.solve_part1()
+AdventOfCode.Y2024.D02.solve_part2()
