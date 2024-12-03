@@ -29,7 +29,7 @@ defmodule AdventOfCode.Y2024.D03 do
   end
 
   def solve_part2() do
-    program = parse_input("input.txt")
+    parse_input("input.txt")
       |> parse_toggle
       |> scan(0)
       |> IO.inspect()
