@@ -15,73 +15,46 @@ defmodule AdventOfCode.Y2024.D04 do
     data
     |> Enum.with_index()
     |> Enum.reduce(%{}, fn { row, ri}, acc ->
-      String.split(row, "", trim: true)
+      String.graphemes(row)
        |> Enum.with_index()
        |> Enum.into(acc, fn {col, ci } -> {{ri, ci}, col} end)
     end)
   end
 
-  ##
-  ## Part 1 code
-  ##
-
-  def check(grid, {x,y}, {dx, dy}, <<c::binary-size(1), rest::binary>>) do
-    curr = grid[{x,y}]
-
-    cond do
-      curr === nil -> []
-      curr !== c -> []
-      curr === c && byte_size(rest) === 0 -> {x,y}
-      curr === c -> check(grid, {dx + x, dy + y}, {dx, dy}, rest)
-    end
+  def locations_to_str(grid, locations, {x,y}) do
+    Enum.map(locations, fn {dx,dy} -> grid[{dx + x, dy + y}] end) |> Enum.join("")
   end
 
+  def x_mas?(grid, {x,y}) do
+    locations = [
+      [{-1, -1}, {0, 0}, {1, 1}],
+      [{-1, 1}, {0, 0}, {1, -1}]
+    ]
+    |> Enum.map(&locations_to_str(grid, &1, {x,y}))
+    |> Enum.all?(fn s -> String.contains?(s, ["MAS", "SAM"]) end)
+    |> (fn bool -> if bool, do: 1, else: 0 end).()
+  end
 
-  def begin_check(grid, start, str) do
-    [{0,-1}, {0, 1}, {-1, 0}, {1, 0}, {-1, -1}, {1, 1}, {1,-1}, {-1, 1}]
-      |> Enum.map(fn direction ->
-        case check(grid, start, direction, str) do
-          {x,y} -> [{start, {x,y}}]
-          [] -> []
-        end
-      end)
+  def xmas?(grid, {x,y}) do
+    directions = [{0,-1}, {0, 1}, {-1, 0}, {1, 0}, {-1, -1}, {1, 1}, {1,-1}, {-1, 1}]
 
+    Enum.map(directions, fn {x,y} ->
+       1..3 |> Enum.map(fn r -> {x * r, y * r} end)
+    end)
+    |> Enum.map(&locations_to_str(grid, &1, {x,y}))
+    |> Enum.filter(fn s -> String.contains?(s, ["MAS"]) end)
+    |> Enum.count()
   end
 
   def solve_part1() do
     grid = parse_input("input.txt") |> to_grid_map()
 
     grid
-      |> Map.keys()
-      |> Enum.map(fn start -> begin_check(grid, start, "XMAS") end)
-      |> List.flatten()
-      |> Enum.reject(fn x -> x === [] end)
-      |> Enum.into(MapSet.new())
-      |> MapSet.size()
-      |> IO.inspect()
-
-  end
-
-
-  ##
-  ## Part 2 code
-  ##
-
-  def create_mas(grid, d, {x,y}) do
-    d
-    |> Enum.map(fn {dx,dy} -> {dx + x, dy + y} end)
-    |> Enum.map(fn d -> grid[d] end)
-    |> Enum.join("A")
-  end
-
-  def check_x(grid, {x,y}) do
-    [
-      create_mas(grid, [{-1, -1}, {1, 1}], {x,y}),
-      create_mas(grid, [{-1, 1}, {1, -1}], {x,y})
-    ]
-    |> Enum.all?(fn s -> s === "MAS" || s === "SAM" end)
-    |> (fn bool -> if bool, do: 1, else: 0 end).()
-
+    |> Map.keys()
+    |> Enum.filter(fn {x,y} -> grid[{x,y}] === "X" end)
+    |> Enum.map(fn a -> xmas?(grid, a) end)
+    |> Enum.sum()
+    |> IO.inspect()
   end
 
   def solve_part2() do
@@ -90,7 +63,7 @@ defmodule AdventOfCode.Y2024.D04 do
     grid
     |> Map.keys()
     |> Enum.filter(fn {x,y} -> grid[{x,y}] === "A" end)
-    |> Enum.map(fn a -> check_x(grid, a) end)
+    |> Enum.map(fn a -> x_mas?(grid, a) end)
     |> Enum.sum()
     |> IO.inspect()
   end
