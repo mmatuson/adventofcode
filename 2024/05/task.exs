@@ -35,12 +35,7 @@ defmodule AdventOfCode.Y2024.D05 do
   end
 
   def reorder(update, rules) do
-    update
-      |> Enum.sort(fn a, b ->
-        a_rules = Map.get(rules, a, [])
-        b_rules = Map.get(rules, b, [])
-        if Enum.find(a_rules, fn i -> i === b end), do: true, else: false
-      end)
+    update |> Enum.sort(fn a, b -> b in Map.get(rules, a, []) end)
   end
 
   def solve_part1() do
